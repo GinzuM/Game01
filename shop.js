@@ -1,119 +1,143 @@
 // shop.js - Lógica do Mercador e Upgrades Dinâmicos
 
 const ShopState = {
-currentItems: [],
-rerollCost: 5
+    currentItems: [],
+    rerollCost: 5
 };
 
 // Inicializa a loja ao entrar no nó do mapa
 function initShop() {
-console.log("Acessando interface do Mercador.");
+    console.log("Acessando interface do Mercador.");
+    
+    // Verifica se o banco de dados procedural existe antes de prosseguir
+    if (!GameState.db || !GameState.db.tomes || !GameState.db.implants) {
+        console.error("Erro: Banco de dados não carregado. Abortando loja.");
+        return;
+    }
 
-// Configura botões da loja
-const btnReroll = document.getElementById('btn-reroll');
-const btnLeave = document.getElementById('btn-leave-shop');
+    const btnReroll = document.getElementById('btn-reroll');
+    const btnLeave = document.getElementById('btn-leave-shop');
+    
+    // Removemos os listeners antigos substituindo os botões por clones para evitar duplicação de eventos
+    if (btnReroll) {
+        const newBtnReroll = btnReroll.cloneNode(true);
+        btnReroll.parentNode.replaceChild(newBtnReroll, btnReroll);
+        newBtnReroll.addEventListener('click', rerollShop);
+    }
+    
+    if (btnLeave) {
+        const newBtnLeave = btnLeave.cloneNode(true);
+        btnLeave.parentNode.replaceChild(newBtnLeave, btnLeave);
+        newBtnLeave.addEventListener('click', leaveShop);
+    }
 
-// Evita múltiplos binds caso o jogador visite a loja várias vezes
-btnReroll.replaceWith(btnReroll.cloneNode(true));
-btnLeave.replaceWith(btnLeave.cloneNode(true));
-
-document.getElementById('btn-reroll').addEventListener('click', rerollShop);
-document.getElementById('btn-leave-shop').addEventListener('click', leaveShop);
-
-generateShopItems();
+    generateShopItems();
 }
 
 // Gera o inventário do mercador baseado no pool do data.json
 function generateShopItems() {
-const shopContainer = document.getElementById('shop-items');
-shopContainer.innerHTML = '';
-ShopState.currentItems = [];
+    const shopContainer = document.getElementById('shop-items');
+    if (!shopContainer) return;
+    
+    shopContainer.innerHTML = '';
+    ShopState.currentItems = [];
 
-// O mercador exibe 3 itens aleatórios (podem ser Tomos ou Implantes)
-for (let i = 0; i < 3; i++) {
-const isImplant = Math.random() > 0.5;
-let pool = isImplant ? GameState.db.implants : GameState.db.tomes;
+    // O mercador exibe 3 itens aleatórios
+    for (let i = 0; i < 3; i++) {
+        const isImplant = Math.random() > 0.5;
+        let pool = isImplant ? GameState.db.implants : GameState.db.tomes;
+        
+        if (pool && pool.length > 0) {
+            let item = pool[Math.floor(Math.random() * pool.length)];
+            let cost = isImplant ? Math.floor(Math.random() * 20) + 30 : Math.floor(Math.random() * 15) + 15;
+            
+            let shopItem = { ...item, cost: cost, isImplant: isImplant, instanceId: `shop_${Date.now()}_${i}` };
+            ShopState.currentItems.push(shopItem);
+        }
+    }
 
-// Sorteia um item que não seja secreto (isso pode ser parametrizado depois)
-let item = pool[Math.floor(Math.random() * pool.length)];
-
-// Custo dinâmico: Implantes são mais caros que Tomos
-let cost = isImplant ? Math.floor(Math.random() * 20) + 30 : Math.floor(Math.random() * 15) + 15;
-
-// Clona o objeto para não sujar o banco de dados original
-let shopItem = { ...item, cost: cost, isImplant: isImplant, instanceId: shop_${Date.now()}_${i} };
-ShopState.currentItems.push(shopItem);
-}
-
-renderShopItems();
+    renderShopItems();
 }
 
 function renderShopItems() {
-const shopContainer = document.getElementById('shop-items');
-shopContainer.innerHTML = '';
+    const shopContainer = document.getElementById('shop-items');
+    if (!shopContainer) return;
+    
+    shopContainer.innerHTML = '';
 
-ShopState.currentItems.forEach(item => {
-const itemEl = document.createElement('div');
-itemEl.className = 'card-item';
-// Bordas diferentes para diferenciar implantes de tomos
-itemEl.style.borderColor = item.isImplant ? 'var(--flesh-red)' : 'var(--metal-gray)';
+    ShopState.currentItems.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'card-item';
+        itemEl.style.borderColor = item.isImplant ? 'var(--flesh-red)' : 'var(--metal-gray)';
+        
+        itemEl.innerHTML = `
+            <div class="card-title" style="color: ${item.isImplant ? 'var(--flesh-red)' : 'var(--corrupt-green)'}">
+                ${item.name}
+            </div>
+            <div class="card-desc" style="margin-top: 5px;">${item.description}</div>
+            <div class="card-desc" style="margin-top: 10px; font-weight: bold; color: var(--highlight);">
+                Preço: ${item.cost}
+            </div>
+        `;
 
-itemEl.innerHTML = &lt;div class="card-title" style="color: ${item.isImplant ? 'var(--flesh-red)' : 'var(--corrupt-green)'}">
-${item.name} &lt;/div&gt; &lt;div class="card-desc"&gt;${item.description}</div>
-<div class="card-desc" style="margin-top: 10px; font-weight: bold; color: var(--highlight);">
-Preço: ${item.cost} &lt;/div&gt;;
-
-itemEl.addEventListener('click', () => buyItem(item, itemEl));
-shopContainer.appendChild(itemEl);
-});
+        itemEl.addEventListener('click', () => buyItem(item, itemEl));
+        shopContainer.appendChild(itemEl);
+    });
 }
 
 function buyItem(item, elementNode) {
-if (GameState.currency >= item.cost) {
-GameState.currency -= item.cost;
-updateHUD();
+    if (GameState.currency >= item.cost) {
+        GameState.currency -= item.cost;
+        
+        if (typeof updateHUD === 'function') updateHUD();
+        
+        // Remove da vitrine
+        elementNode.remove();
+        ShopState.currentItems = ShopState.currentItems.filter(i => i.instanceId !== item.instanceId);
 
-// Remove da vitrine da loja
-elementNode.remove();
-ShopState.currentItems = ShopState.currentItems.filter(i => i.instanceId !== item.instanceId);
-
-if (item.isImplant) {
-GameState.bag.push(item);
-console.log(Implante adquirido: ${item.name}); } else { // Se for um Tomo de Upgrade (ex: consumível), vai para a zona ativa // Caso contrário, vai para o Deck. Aqui simplificamos indo para o Deck. GameState.deck.push(item); console.log(Tomo adquirido: ${item.name});
-}
-
-// Se o inventário estiver aberto no fundo, força atualização
-if (!document.getElementById('inventory-modal').classList.contains('hidden')) {
-renderInventory();
-}
-} else {
-alert("Moeda insuficiente. O mercador recusa a transação.");
-}
+        if (item.isImplant) {
+            GameState.bag.push(item);
+            console.log(`Implante adquirido: ${item.name}`);
+        } else {
+            GameState.deck.push(item);
+            console.log(`Tomo adquirido: ${item.name}`);
+        }
+        
+        // Atualiza o inventário em tempo real se o modal estiver aberto no fundo
+        const inventoryModal = document.getElementById('inventory-modal');
+        if (inventoryModal && !inventoryModal.classList.contains('hidden') && typeof renderInventory === 'function') {
+            renderInventory();
+        }
+    } else {
+        alert("Moeda insuficiente. O mercador recusa a transação.");
+    }
 }
 
 function rerollShop() {
-if (GameState.currency >= ShopState.rerollCost) {
-GameState.currency -= ShopState.rerollCost;
-// Escalonamento do custo de reroll (anti-abuso)
-ShopState.rerollCost += 5;
-document.getElementById('btn-reroll').innerText = Atualizar Vitrine (Custo: ${ShopState.rerollCost});
-
-updateHUD();
-generateShopItems();
-} else {
-alert("Recursos insuficientes para atualizar o catálogo.");
-}
+    if (GameState.currency >= ShopState.rerollCost) {
+        GameState.currency -= ShopState.rerollCost;
+        ShopState.rerollCost += 5; // Aumenta o custo a cada uso
+        
+        const btnReroll = document.getElementById('btn-reroll');
+        if (btnReroll) {
+            btnReroll.innerText = `Atualizar Vitrine (Custo: ${ShopState.rerollCost})`;
+        }
+        
+        if (typeof updateHUD === 'function') updateHUD();
+        generateShopItems();
+    } else {
+        alert("Recursos insuficientes para atualizar o catálogo.");
+    }
 }
 
 function leaveShop() {
-// Reseta custo do reroll para a próxima visita
-ShopState.rerollCost = 5;
-document.getElementById('btn-reroll').innerText = Atualizar Vitrine (Custo: 5);
-switchScreen('map-screen');
+    ShopState.rerollCost = 5;
+    const btnReroll = document.getElementById('btn-reroll');
+    if (btnReroll) {
+        btnReroll.innerText = `Atualizar Vitrine (Custo: 5)`;
+    }
+    
+    if (typeof switchScreen === 'function') {
+        switchScreen('map-screen');
+    }
 }
-
-
-
-
-
-
