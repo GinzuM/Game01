@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRIMOIRE.SYS // PROTOCOLO DE CONJURAÇÃO V3</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body class="crt-active">
+    <div class="crt-scanline"></div>
+
+    <!-- TELA DE ABERTURA / BOOT SEQUENCE (PS1 / DOS CYBERPUNK) -->
+    <div id="title-screen" class="title-screen">
+        <div class="boot-terminal">
+            <div class="terminal-header">
+                <span class="pulse-dot"></span> NEUROMANCER BIOS v5.12 // ENTIDADES BIOMECÂNICAS DETECTADAS
+            </div>
+            <h1 class="game-logo glitch-text" data-text="GRIMOIRE.SYS">GRIMOIRE.SYS</h1>
+            <p class="logo-sub">DECKBUILDER DE HORROR CÓSMICO E CADÁVERES CIBERNÉTICOS</p>
+            <div class="boot-quote">
+                "Carne podre costurada a placas de silício... o algoritmo exige sangue e memória."
+            </div>
+            <div class="boot-specs">
+                <span>CÓDICE: 50 COMPONENTES FÍSICOS</span> | <span>STATUS: CRÍTICO</span>
+            </div>
+            <button id="btn-start-game" class="cyber-btn btn-huge">INICIALIZAR SISTEMA</button>
+        </div>
+    </div>
+
+    <!-- MAIN GAME FRAME -->
+    <div id="game-container" class="game-container">
+        <!-- BARRA SUPERIOR: RACKS DE IMPLANTES & MATERIAIS & BOTÕES GLOBAIS -->
+        <header id="top-bar">
+            <!-- RACK DE IMPLANTES BIO-CIBERNÉTICOS -->
+            <div class="rack-box relics-box">
+                <div class="rack-title-row">
+                    <span class="rack-label">IMPLANTES BIO-CIBERNÉTICOS (CORINGAS)</span>
+                    <span id="relic-counter" class="rack-count">0 / 5</span>
+                </div>
+                <div id="relic-slots" class="slots-row">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <!-- RACK DE RITUAIS & CONSUMÍVEIS -->
+            <div class="rack-box consumables-box">
+                <div class="rack-title-row">
+                    <span class="rack-label">RITUAIS & GLIFOS</span>
+                    <span id="consumable-counter" class="rack-count">0 / 2</span>
+                </div>
+                <div id="consumable-slots" class="slots-row">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <!-- BOTÕES AUXILIARES -->
+            <div class="top-nav-buttons">
+                <button id="btn-open-tomes" class="cyber-btn nav-btn">
+                    <span class="icon">📖</span> TOMOS
+                </button>
+                <button id="btn-open-codex" class="cyber-btn nav-btn">
+                    <span class="icon">🗃️</span> CÓDICE (<span id="deck-count-hud">50</span>)
+                </button>
+                <button id="btn-open-workbench" class="cyber-btn nav-btn btn-workbench">
+                    <span class="icon">🛠️</span> BANCADA / POOL
+                </button>
+            </div>
+        </header>
+
+        <!-- ÁREA PRINCIPAL DO JOGO -->
+        <main id="arena">
+            <!-- PAINEL LATERAL ESQUERDO: COMBATE & PONTOS -->
+            <aside id="sidebar">
+                <div class="panel-box status-panel">
+                    <div class="ante-indicator" id="ante-indicator">SETOR 1 // ANOMALIA MENOR</div>
+                    <div class="boss-curse-box" id="boss-curse-box" style="display: none;">
+                        <span class="curse-tag">MALDIÇÃO:</span>
+                        <span id="curse-desc">--</span>
+                    </div>
+
+                    <div class="score-target-wrap">
+                        <label>META PARA SOBREVIVER</label>
+                        <div class="score-display target" id="target-score">300</div>
+                    </div>
+
+                    <div class="score-current-wrap">
+                        <label>DANO / PONTOS ACUMULADOS</label>
+                        <div class="score-display current" id="current-score">0</div>
+                    </div>
+
+                    <div class="vital-stats-grid">
+                        <div class="vital-cell">
+                            <span class="v-label">MÃOS</span>
+                            <span class="v-val" id="hands-left">4</span>
+                        </div>
+                        <div class="vital-cell">
+                            <span class="v-label">DESCARTES</span>
+                            <span class="v-val" id="discards-left">3</span>
+                        </div>
+                        <div class="vital-cell">
+                            <span class="v-label">FRAGS ($)</span>
+                            <span class="v-val gold-text" id="player-gold">4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CÁLCULO DINÂMICO DE PONTUAÇÃO DO TOMO -->
+                <div class="panel-box calc-panel">
+                    <div class="tome-name-preview" id="tome-name">--- SELECIONE COMPONENTES ---</div>
+                    <div class="tome-level-preview" id="tome-level">LVL. 1</div>
+                    <div class="math-row">
+                        <div class="math-badge chips-badge" id="calc-chips">0</div>
+                        <div class="math-op">×</div>
+                        <div class="math-badge mult-badge" id="calc-mult">0</div>
+                    </div>
+                    <div class="est-total-row">PREVISÃO: <span id="calc-est">0</span></div>
+                </div>
+
+                <!-- DADO ARCANO D20 COM SISTEMA DE REROLL OBRIGATÓRIO A CADA MÃO -->
+                <div class="panel-box dice-panel">
+                    <div class="dice-hdr">
+                        <span>DADO DO DESTINO [d20]</span>
+                        <span id="dice-gold-status" class="dice-gold-tag" style="display:none;">DOURADO!</span>
+                    </div>
+                    <div class="dice-poly" id="dice-poly">--</div>
+                    <button id="btn-reroll-dice" class="cyber-btn btn-sm">FORÇAR REROLL (-1 DESC.)</button>
+                    <div class="dice-feedback" id="dice-log">Gira a cada nova mão jogada...</div>
+                </div>
+            </aside>
+
+            <!-- TABULEIRO CENTRAL -->
+            <section id="board">
+                <!-- INIMIGO COM ANIMAÇÃO WIREFRAME / CÓSMICA -->
+                <div class="enemy-area" id="enemy-area">
+                    <div class="enemy-avatar-wrap">
+                        <div class="enemy-wireframe" id="enemy-visual">
+                            <div class="core-cube"></div>
+                            <div class="orbit-ring"></div>
+                        </div>
+                    </div>
+                    <div class="enemy-details">
+                        <h2 id="enemy-title">ANOMALIA DE CIRCUITO PRIMÁRIO</h2>
+                        <p id="enemy-lore">Cadáveres e chips se fundem gerando interferência arcana.</p>
+                        <div class="enemy-hp-bar">
+                            <div class="hp-fill" id="enemy-hp-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ZONA DE CONJURAÇÃO (ONDE OS COMPONENTES SOBEM E PONTUAM EM CASCATA) -->
+                <div class="cast-stage" id="cast-stage"></div>
+
+                <!-- MÃO DO JOGADOR COM OS OBJETOS FÍSICOS -->
+                <div class="hand-stage" id="hand-stage"></div>
+
+                <!-- BARRA DE AÇÕES -->
+                <div class="action-buttons-row">
+                    <button id="btn-discard" class="cyber-btn btn-danger">DESCARTAR (<span id="discard-count-btn">0</span>/5)</button>
+                    <button id="btn-cast" class="cyber-btn btn-primary">CONJURAR TOMO</button>
+                    <button id="btn-sort-val" class="cyber-btn btn-sub">ORDENAR VALOR</button>
+                    <button id="btn-sort-suit" class="cyber-btn btn-sub">ORDENAR REINO</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- BANNER TRIUNFAL DE VITÓRIA DE RODADA -->
+        <div id="victory-banner" class="victory-banner">
+            <div class="victory-content">
+                <h1 class="victory-title glitch-text" data-text="ENTIDADE EXPURGADA">ENTIDADE EXPURGADA</h1>
+                <div class="victory-rewards" id="victory-rewards-text">+5 FRAGS RECEBIDOS</div>
+            </div>
+        </div>
+
+        <!-- MODAL: SELEÇÃO DE BLIND (PROGRESSÃO RIGOROSA BALATRO) -->
+        <div id="blind-modal" class="modal-backdrop">
+            <div class="modal-window blind-window">
+                <div class="window-title">SETOR <span id="current-ante-display">1</span> // SELECIONE A PRÓXIMA INFILTRAÇÃO</div>
+                <div class="blinds-grid">
+                    <div class="blind-slot" id="blind-slot-small">
+                        <div class="blind-badge">ANOMALIA MENOR</div>
+                        <div class="blind-target">ALVO: <span id="b-score-small">300</span></div>
+                        <div class="blind-gain">RECOMPENSA: +3 Frags</div>
+                        <div class="blind-btn-group">
+                            <button class="cyber-btn btn-primary" id="btn-play-small">ENFRENTAR</button>
+                            <button class="cyber-btn btn-skip" id="btn-skip-small">PROFANAR (SKIP)</button>
+                        </div>
+                        <div class="stigma-card" id="stigma-desc-small">Carregando Estigma...</div>
+                    </div>
+
+                    <div class="blind-slot locked" id="blind-slot-big">
+                        <div class="blind-badge">ANOMALIA MAIOR</div>
+                        <div class="blind-target">ALVO: <span id="b-score-big">450</span></div>
+                        <div class="blind-gain">RECOMPENSA: +4 Frags</div>
+                        <div class="blind-btn-group">
+                            <button class="cyber-btn btn-primary" id="btn-play-big">ENFRENTAR</button>
+                            <button class="cyber-btn btn-skip" id="btn-skip-big">PROFANAR (SKIP)</button>
+                        </div>
+                        <div class="stigma-card" id="stigma-desc-big">Carregando Estigma...</div>
+                    </div>
+
+                    <div class="blind-slot boss locked" id="blind-slot-boss">
+                        <div class="blind-badge boss-badge">ENTIDADE EXCOMUNGADA</div>
+                        <div class="blind-target">ALVO: <span id="b-score-boss">600</span></div>
+                        <div class="blind-gain">RECOMPENSA: +5 Frags</div>
+                        <div class="boss-curse-preview" id="boss-curse-preview">Maldição: Em avaliação...</div>
+                        <div class="blind-btn-group">
+                            <button class="cyber-btn btn-primary" id="btn-play-boss">ENFRENTAR CHEFE</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: LOJA DE SUCATA ARCANA COM REESTOQUE AUTOMÁTICO E ANIMAÇÕES -->
+        <div id="shop-modal" class="modal-backdrop">
+            <div class="modal-window shop-window">
+                <div class="shop-top-bar">
+                    <div class="shop-title-h">SUCATA ARCANA & BIOTECNOLOGIA PROIBIDA</div>
+                    <div class="shop-wallet">SEUS FRAGMENTOS: <span class="gold-text" id="shop-gold-counter">0</span></div>
+                </div>
+
+                <div class="shop-content-scroll">
+                    <div class="shop-shelf-header">IMPLANTES, RITUAIS & BUFFS DE DADOS</div>
+                    <div class="shop-items-row" id="shop-items-row"></div>
+
+                    <div class="shop-shelf-header">LOTES DE MATERIAIS RÚNICOS</div>
+                    <div class="shop-packs-row" id="shop-packs-row"></div>
+                </div>
+
+                <div class="shop-bottom-bar">
+                    <button id="btn-reroll-shop" class="cyber-btn">REROLL MERCADO (4 Frags)</button>
+                    <button id="btn-leave-shop" class="cyber-btn btn-primary">AVANÇAR PARA PRÓXIMA ANOMALIA &gt;&gt;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: BANCADA DE REMANEJAMENTO & SACRIFÍCIO (A NOVA MESA / POOL TEMPORÁRIA) -->
+        <div id="workbench-modal" class="modal-backdrop">
+            <div class="modal-window workbench-window">
+                <div class="window-header-row">
+                    <h2>BANCADA DE REORDENAÇÃO & MANUTENÇÃO SINÁPTICA</h2>
+                    <button id="btn-close-workbench" class="cyber-btn btn-sm">CONCLUIR AJUSTE</button>
+                </div>
+                <div class="workbench-guide">
+                    Clique para mover itens entre o seu **RACK EQUIPADO** e a **MESA TEMPORÁRIA**.
+                    Reorganize a ordem (efeitos de ativação da esquerda para a direita). 
+                    <span class="warning-text">AVISO: Os itens que ficarem na "Mesa Temporária" ao fechar serão DESTRUÍDOS E PURGADOS!</span>
+                </div>
+
+                <div class="workbench-split">
+                    <!-- ÁREA EQUIPADA -->
+                    <div class="workbench-column">
+                        <h3>SEUS IMPLANTES EQUIPADOS (MÁX: 5)</h3>
+                        <div id="workbench-equipped-relics" class="pool-zone"></div>
+                        <h3 style="margin-top: 10px;">SEUS RITUAIS EQUIPADOS (MÁX: 2)</h3>
+                        <div id="workbench-equipped-consumables" class="pool-zone"></div>
+                    </div>
+
+                    <!-- MESA TEMPORÁRIA DE DESCARTE / POOL -->
+                    <div class="workbench-column pool-danger">
+                        <h3>MESA TEMPORÁRIA (ITENS AQUI SERÃO SACRIFICADOS)</h3>
+                        <div id="workbench-table-pool" class="pool-zone pool-large"></div>
+                        <div class="pool-actions">
+                            <button id="btn-clear-pool" class="cyber-btn btn-danger btn-sm">PURGAR TODOS DA MESA AGORA</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: LISTA DE TOMOS & NÍVEIS -->
+        <div id="tomes-modal" class="modal-backdrop">
+            <div class="modal-window tomes-window">
+                <div class="window-header-row">
+                    <h2>GRIMÓRIO DE TOMOS CONHECIDOS</h2>
+                    <button id="btn-close-tomes" class="cyber-btn btn-sm">FECHAR [X]</button>
+                </div>
+                <div class="tomes-list-container" id="tomes-list-container"></div>
+            </div>
+        </div>
+
+        <!-- MODAL: CÓDICE (DECK INSPECTION) -->
+        <div id="codex-modal" class="modal-backdrop">
+            <div class="modal-window codex-window">
+                <div class="window-header-row">
+                    <h2>ARQUIVO DE COMPONENTES DO CÓDICE (<span id="codex-total-num">50</span>)</h2>
+                    <button id="btn-close-codex" class="cyber-btn btn-sm">FECHAR [X]</button>
+                </div>
+                <div class="codex-types-bar">
+                    <span>FILTRAR REINO:</span>
+                    <button class="filter-tag active" data-filter="all">TODOS</button>
+                    <button class="filter-tag" data-filter="roedor">ROEDORES</button>
+                    <button class="filter-tag" data-filter="anfibio">ANFÍBIOS</button>
+                    <button class="filter-tag" data-filter="ram">MEMÓRIA RAM</button>
+                    <button class="filter-tag" data-filter="disquete">DISQUETES</button>
+                    <button class="filter-tag" data-filter="lapide">LÁPIDES</button>
+                </div>
+                <div class="codex-items-grid" id="codex-grid"></div>
+            </div>
+        </div>
+
+        <!-- MODAL: GAMEOVER -->
+        <div id="gameover-modal" class="modal-backdrop">
+            <div class="modal-window gameover-window">
+                <h1 class="glitch-text" data-text="COLAPSO SINÁPTICO">COLAPSO SINÁPTICO</h1>
+                <p>Sua consciência se fragmentou e o sistema reclamou seus órgãos.</p>
+                <div class="stats-recap">
+                    <div>SETOR FINAL: <span id="final-ante-val">1</span></div>
+                    <div>MELHOR PONTUAÇÃO NUM TOMO: <span id="final-best-val">0</span> PONTOS</div>
+                </div>
+                <button id="btn-restart-game" class="cyber-btn btn-primary btn-huge">RECONECTAR CONSCIÊNCIA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS MODULARES -->
+    <script src="js/audio.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/scoring.js"></script>
+    <script src="js/deck.js"></script>
+    <script src="js/relics.js"></script>
+    <script src="js/shop.js"></script>
+    <script src="js/dice.js"></script>
+    <script src="js/engine.js"></script>
+</body>
+</html>
