@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>002 - Ato I: O Laboratório de Carne e Metal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Modal de Inventário Global -->
+<div id="inventory-modal" class="hidden modal-overlay">
+<div class="modal-content">
+<header>
+<h2>Arquivo de Anomalias (Inventário)</h2>
+<button id="close-inventory" class="btn-close">X</button>
+</header>
+<div id="deck-view">
+<h3>Tomos e Páginas (Deck: <span id="deck-count">0</span>)</h3>
+<div id="deck-grid" class="grid-container"></div>
+</div>
+<div id="implants-view">
+<h3>Implantes Cibernéticos e Biológicos (Bag)</h3>
+<div id="implants-grid" class="grid-container"></div>
+</div>
+</div>
+</div>
+
+<!-- Modal de Configurações Global -->
+<div id="settings-modal" class="hidden modal-overlay">
+<div class="modal-content settings-content">
+<header>
+<h2>Configurações do Sistema</h2>
+<button id="close-settings" class="btn-close">X</button>
+</header>
+<div class="settings-group">
+<label>Volume Geral: <span id="val-vol">100</span>%</label>
+<input type="range" id="range-vol" min="0" max="100" value="100">
+</div>
+<div class="settings-group">
+<label>Escala da Interface (GUI): <span id="val-gui">1.0</span>x</label>
+<input type="range" id="range-gui" min="0.5" max="1.5" step="0.1" value="1.0">
+</div>
+<div class="settings-group">
+<label>Sensibilidade (Mouse/Toque): <span id="val-sens">1.0</span>x</label>
+<input type="range" id="range-sens" min="0.1" max="3.0" step="0.1" value="1.0">
+</div>
+<div class="settings-group">
+<label>Escala Controles Mobile: <span id="val-ctrl">1.0</span>x</label>
+<input type="range" id="range-ctrl" min="0.5" max="2.0" step="0.1" value="1.0">
+</div>
+</div>
+</div>
+
+<!-- Interface Principal do Jogo -->
+<main id="game-container">
+
+<!-- Menu Principal -->
+<section id="main-menu" class="screen active main-menu-layout">
+<h1 class="title-text ps1-jitter">O Arquivo do Abismo</h1>
+<h2 class="subtitle-text">Ato I: Carne e Metal</h2>
+
+<div class="menu-buttons">
+<button id="btn-new-game">Iniciar Novo Ciclo</button>
+<button id="btn-load-game">Injetar Memória (Carregar)</button>
+<button id="btn-toggle-mobile" style="border-color: var(--corrupt-green);">Ativar Modo Celular</button>
+<button id="btn-open-settings-menu">Configurações</button>
+</div>
+
+<input type="file" id="save-file-input" class="hidden" accept=".txt">
+</section>
+
+<!-- HUD Global -->
+<nav id="global-hud" class="hidden">
+<div class="stats">
+<span>Integridade: <span id="hp-display">100</span>%</span>
+<span>Moeda: <span id="currency-display">0</span></span>
+</div>
+<div class="hud-actions">
+<button id="btn-save-game" class="btn-green">Extrair Backup</button>
+<button id="btn-inventory">Inventário</button>
+<button id="btn-open-settings-hud">⚙️</button>
+</div>
+</nav>
+
+<!-- Tela do Mapa -->
+<section id="map-screen" class="screen hidden">
+<h2>Rede de Navegação</h2>
+<div id="map-grid"></div>
+</section>
+
+<!-- Tela da Loja -->
+<section id="shop-screen" class="screen hidden">
+<h2>Mercador de Carne e Metal</h2>
+<div class="shop-interaction">
+<div id="shop-items" class="grid-container"></div>
+<div class="shop-actions">
+<button id="btn-reroll">Atualizar Vitrine (Custo: 5)</button>
+<button id="btn-leave-shop">Retornar ao Mapa</button>
+</div>
+</div>
+</section>
+
+<!-- Tela de Eventos -->
+<section id="event-screen" class="screen hidden">
+<h2 id="event-title">Anomalia</h2>
+<p id="event-description">...</p>
+<div id="event-choices"></div>
+</section>
+
+<!-- Tela de Combate -->
+<section id="combat-screen" class="screen hidden">
+<header id="boss-name">Entidade Desconhecida</header>
+
+<div class="combat-layout">
+<div id="arena-container">
+<canvas id="arena" width="600" height="300"></canvas>
+
+<!-- Controles Flutuantes Mobile (Injetados sobre o Canvas) -->
+<div id="mobile-controls" class="hidden">
+<button id="btn-up" class="dpad-btn">▲</button>
+<div class="dpad-row">
+<button id="btn-left" class="dpad-btn">◄</button>
+<button id="btn-down" class="dpad-btn">▼</button>
+<button id="btn-right" class="dpad-btn">►</button>
+</div>
+</div>
+</div>
+
+<div id="ritual-zone">
+<div class="stats-combat">
+<div class="mult-box">Mult: x<span id="multiplier">1.0</span></div>
+<div class="dice-pool">Dados: <span id="dice-result">0</span></div>
+</div>
+<div id="draw-pile-info">Saque Restante: <span id="draw-count">5</span></div>
+<div id="hand" class="grid-container"></div>
+<div class="combat-actions">
+<button id="btn-play-ritual">Executar Ritual</button>
+<button id="btn-discard">Descartar</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+
+<!-- Base de Dados -->
+<script src="data.json" type="application/json" id="game-data"></script>
+
+<!-- Scripts Modulares -->
+<script src="settings.js"></script>
+<script src="save.js"></script>
+<script src="inventory.js"></script>
+<script src="shop.js"></script>
+<script src="events.js"></script>
+<script src="combat.js"></script>
+<script src="map.js"></script>
+<script src="engine.js"></script>
+</body>
+</html>
+

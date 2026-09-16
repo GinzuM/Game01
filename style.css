@@ -1,0 +1,304 @@
+:root {
+--bg-dark: #070709;
+--flesh-red: #7a0000;
+--metal-gray: #3a3a40;
+--ui-border: #222222;
+--text-light: #c4c4c4;
+--corrupt-green: #32cd32;
+--highlight: #b80000;
+}
+
+/* Base e Estética Retrô/PS1 /
+body {
+margin: 0;
+padding: 0;
+background-color: var(--bg-dark);
+color: var(--text-light);
+font-family: 'Courier New', Courier, monospace;
+overflow-x: hidden;
+image-rendering: pixelated; / Essencial para a estética low-poly em elementos 2D/texturas */
+}
+
+/* Efeito Vertex Jitter (Tremor de Polígonos PS1) */
+@keyframes vertex-jitter {
+0% { transform: translate(0px, 0px); }
+25% { transform: translate(1px, -1px); }
+50% { transform: translate(-1px, 1px); }
+75% { transform: translate(1px, 1px); }
+100% { transform: translate(0px, 0px); }
+}
+
+.ps1-jitter {
+animation: vertex-jitter 0.2s infinite;
+}
+
+/* Utilitários de Estado */
+.hidden {
+display: none !important;
+}
+
+.screen {
+width: 100vw;
+min-height: calc(100vh - 60px);
+padding: 20px;
+box-sizing: border-box;
+}
+
+.grid-container {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+gap: 15px;
+padding: 15px;
+background: rgba(10, 10, 12, 0.8);
+border: 1px solid var(--ui-border);
+}
+
+/* Tipografia e Botões */
+h2, h3, header {
+text-transform: uppercase;
+letter-spacing: 2px;
+border-bottom: 1px solid var(--metal-gray);
+padding-bottom: 5px;
+}
+
+button {
+background: var(--metal-gray);
+color: var(--text-light);
+border: 1px outset var(--ui-border);
+padding: 10px 15px;
+cursor: pointer;
+font-family: inherit;
+text-transform: uppercase;
+font-size: 12px;
+font-weight: bold;
+transition: all 0.1s;
+}
+
+button:hover {
+background: var(--flesh-red);
+border-color: var(--highlight);
+color: #fff;
+}
+
+button:active {
+border-style: inset;
+}
+
+/* HUD Global */
+#global-hud {
+display: flex;
+justify-content: space-between;
+align-items: center;
+height: 60px;
+padding: 0 20px;
+background: #020202;
+border-bottom: 2px solid var(--flesh-red);
+box-shadow: 0 4px 10px rgba(122, 0, 0, 0.3);
+}
+
+.stats {
+display: flex;
+gap: 20px;
+font-weight: bold;
+}
+
+#hp-display {
+color: var(--highlight);
+}
+
+/* Modal de Inventário */
+#inventory-modal {
+position: fixed;
+top: 0;
+left: 0;
+width: 100vw;
+height: 100vh;
+background: rgba(0, 0, 0, 0.85);
+z-index: 1000;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.modal-content {
+width: 85%;
+height: 85%;
+background: var(--bg-dark);
+border: 2px solid var(--metal-gray);
+padding: 20px;
+overflow-y: auto;
+box-shadow: inset 0 0 20px #000;
+}
+
+.modal-content header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+#close-inventory {
+background: var(--flesh-red);
+border: none;
+}
+
+/* Cartas e Itens (Balatro/Inscryption Style) */
+.card-item {
+width: 110px;
+height: 160px;
+background: #111;
+border: 1px solid var(--metal-gray);
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+padding: 10px;
+box-sizing: border-box;
+cursor: pointer;
+position: relative;
+user-select: none;
+box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+}
+
+.card-item:hover {
+border-color: var(--highlight);
+transform: translateY(-5px);
+z-index: 10;
+}
+
+.card-title {
+font-size: 10px;
+font-weight: bold;
+text-align: center;
+color: var(--corrupt-green);
+}
+
+.card-desc {
+font-size: 9px;
+text-align: justify;
+}
+
+/* Combate */
+.combat-layout {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 25px;
+margin-top: 20px;
+}
+
+#arena-container {
+border: 4px solid var(--ui-border);
+background: #000;
+position: relative;
+box-shadow: 0 0 15px rgba(122, 0, 0, 0.6);
+}
+
+canvas {
+display: block;
+cursor: crosshair;
+}
+
+#ritual-zone {
+width: 100%;
+max-width: 900px;
+background: #0a0a0c;
+padding: 20px;
+border: 1px solid var(--metal-gray);
+}
+
+.stats-combat {
+display: flex;
+justify-content: space-between;
+margin-bottom: 15px;
+font-size: 16px;
+color: var(--text-light);
+}
+
+.mult-box {
+color: var(--corrupt-green);
+}
+
+.combat-actions {
+display: flex;
+justify-content: center;
+gap: 20px;
+margin-top: 20px;
+}
+
+/* Loja Dinâmica */
+.shop-interaction {
+display: grid;
+grid-template-columns: 2fr 1fr;
+gap: 20px;
+}
+
+.shop-actions {
+display: flex;
+flex-direction: column;
+gap: 15px;
+}
+
+#active-upgrades-zone {
+grid-column: 1 / -1;
+border-top: 1px dashed var(--metal-gray);
+padding-top: 20px;
+margin-top: 20px;
+}
+
+/* Escala de GUI para Desktop (Aplica em todo o jogo) */
+#game-container {
+transform: scale(var(--gui-scale, 1.0));
+transform-origin: top center;
+transition: transform 0.2s ease;
+}
+
+/* Base dos Controles Mobile /
+#mobile-controls {
+position: absolute;
+bottom: 10px;
+right: 10px;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 5px;
+z-index: 50;
+/ Escala específica para os controles */
+transform: scale(var(--ctrl-scale, 1.0));
+transform-origin: bottom right;
+transition: transform 0.2s ease;
+}
+
+.dpad-row {
+display: flex;
+gap: 5px;
+}
+
+.dpad-btn {
+width: 50px;
+height: 50px;
+background: rgba(58, 58, 64, 0.7);
+border: 2px solid var(--corrupt-green);
+color: var(--corrupt-green);
+font-size: 20px;
+border-radius: 8px;
+user-select: none;
+}
+.dpad-btn:active {
+background: var(--corrupt-green);
+color: #000;
+}
+
+/* Layout dos Modais */
+.modal-overlay {
+position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+background: rgba(0, 0, 0, 0.85); z-index: 1000;
+display: flex; justify-content: center; align-items: center;
+}
+.settings-content {
+width: 300px; height: auto; padding: 30px;
+}
+.settings-group {
+margin: 20px 0; display: flex; flex-direction: column; gap: 10px;
+}
+
+
+
